@@ -1,0 +1,108 @@
+import matplotlib.pyplot as plt
+import pandas as pd
+import plotly.express as px
+
+
+df1 = pd.read_csv("data/brasil-real-estate-1.csv")
+df1.head()
+df1.dropna(inplace=True)
+df1[["lat","lon"]]=df1["lat-lon"].str.split(",",expand=True).astype(float)
+df1.head()
+df1["state"]=df1["place_with_parent_names"].str.split("|",expand=True)[2]
+
+df1.head()
+df1["price_usd"]=(
+df1["price_usd"].str.replace("$","",regex=False)
+    .str.replace(",","")
+    .astype(float)
+
+
+)
+
+df1.head()
+df1.drop(columns=["lat-lon","place_with_parent_names"],inplace=True)
+df1.head()
+
+df2 = pd.read_csv("data/brasil-real-estate-2.csv")
+df2["price_usd"]=(df2["price_brl"]/3.19)
+df2.head()
+df2.dropna(inplace=True)
+df2.drop(columns=["price_brl"],inplace=True)
+
+df2.head()df = pd.concat([df1,df2])
+print("df shape:", df.shape)
+fig = px.scatter_mapbox(
+    df,
+    lat="lat",
+    lon="lon",
+    center={"lat": -14.2, "lon": -51.9},  # Map will be centered on Brazil
+    width=600,
+    height=600,
+    hover_data=["price_usd"],  # Display price when hovering mouse over house
+)
+
+fig.update_layout(mapbox_style="open-street-map")
+
+fig.show()
+summary_stats = df[["area_m2","price_usd"]].describe()
+summary_stats
+
+# Build histogram
+plt.hist(df["price_usd"])
+
+
+
+
+# Label axes
+plt.xlabel("Price [USD]");
+plt.ylabel("Frequency");
+plt.title("Distribution of Home Prices")
+
+# Add title
+
+
+
+plt.savefig("images/1-5-12.png", dpi=150)
+
+# Build box plot
+plt.boxplot(df["area_m2"])
+plt.xlabel("Area [sq meters]")
+plt.title("Distribution of Home Sizes")
+
+
+# Label x-axis
+
+
+# Add title
+
+
+
+plt.savefig("images/1-5-13.png", dpi=150)
+mean_price_by_region = df.groupby("region")["price_usd"].mean().sort_values()
+mean_price_by_region
+# Build bar chart, label axes, add title
+mean_price_by_region.plot(
+ kind="bar",
+ xlabel="Region",
+ ylabel="Mean Price [USD]",
+ title="Mean Home Price by Region"
+)
+df_south = df[df["region"]=="South"]
+df_south.head()
+homes_by_state = df_south["state"].value_counts()
+homes_by_state
+
+# Subset data
+df_south_rgs = df[df["state"]=="Rio Grande do Sul"]
+
+# Build scatter plot
+plt.scatter(x=df_south_rgs["area_m2"],y=df_south_rgs["price_usd"])
+
+
+# Label axes
+plt.xlabel("Area [sq meters]")
+plt.ylabel("Price [USD]")
+
+
+# Add title
+plt.title("Rio Grande do Sul: Price vs. Area")
